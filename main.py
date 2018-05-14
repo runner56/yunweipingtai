@@ -5,6 +5,7 @@ import xml.etree.cElementTree as ET
 from requests import Request, Session
 from flask import Flask, request
 from flask_restful import Api, Resource
+from conf import Flask_Conf
 
 sys.path.append("./weworkapi/")
 sys.path.append("./weworkapi/api/src/")
@@ -16,9 +17,11 @@ from WXBizMsgCrypt import WXBizMsgCrypt
 app = Flask(__name__)
 api = Api(app)
 
-sToken = "dmN56lcC"
-sEncodingAESKey = "u5xakCfkVZlxEeaCCSz4oYtY85tp4LA0Cz37ESJ7SEl"
-sCorpID = "wwaf9120d9abbc1549"
+sToken = Flask_Conf["sToken"]
+sEncodingAESKey = Flask_Conf["sEncodingAESKey"]
+sCorpID = Flask_Conf["sCorpID"]
+ServerHost = Flask_Conf["ServerHost"]
+ServerPort = Flask_Conf["ServerPort"]
 
 YZM = ""
 
@@ -92,7 +95,6 @@ class getYZM(Resource):
 api.add_resource(receiveMsg, "/")
 api.add_resource(sendMsg, "/sendMsg")
 api.add_resource(getYZM, "/getYZM")
-# api.add_resource(receiveMsg, "/receiveMsg")
 
 if __name__ == "__main__":
-    app.run(debug=True, port=7001)
+    app.run(debug=True, host=ServerHost, port=ServerPort)

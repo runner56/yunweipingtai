@@ -11,16 +11,12 @@ from PIL import Image
 
 from qywx import MsgManager
 
+sys.path.append("..")
+from conf import JXY_Conf 
+
 PATH = os.getcwd() # 当前目录，用于存储验证码图片
-ACCOUNTS = (
-    {
-        "user":"bupt_devilman@126.com",
-        "pwd":"bbguy1989"
-    },{
-        "user":"759775069@qq.com",
-        "pwd":"bbguy1989"
-    }
-)
+ACCOUNTS = JXY_Conf["ACCOUNTS"]
+TIMER = JXY_Conf["TIMER"]
 
 # 初始化
 def initialDriver(msgManger):
@@ -96,10 +92,10 @@ class jxy:
             self.processTreasure()
         except Exception,e:
             import traceback  
-            msg = traceback.print_exc()
+            msg = traceback.format_exc()
             self.sendMsg(u"账号%s出现异常%s" % (self.user,msg))
 
-        timer = threading.Timer(200, self.processJXYTimer)
+        timer = threading.Timer(TIMER, self.processJXYTimer)
         timer.start()
 
         self.appendMsgList(u"定时器结束")
@@ -265,7 +261,7 @@ class jxy:
         except TimeoutException:
             self.appendMsgList(u"ERROR:无法定位到购买按键！")
             return
-        buyBtn = driver.find_element_by_xpath("//ul[@class='stones tools J_buyTools']/li[3]/i[@class='icon btn-sprite buy']")
+        buyBtn = self.driver.find_element(*buyBtnLocator)
         buyBtn.click()
         
         try:

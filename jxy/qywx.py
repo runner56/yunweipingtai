@@ -27,9 +27,9 @@ class MsgManager(WxMsgSender):
         super(MsgManager, self).__init__()
 
     def sendMsg(self, msg, msgType):
-        print msg, msgType
-        # self.sendWxMsg(msg, msgType)
+        print msg
+        self.sendWxMsg(msg, msgType)
 
-    def getYZM(self):
-        yzmCode = raw_input(u"请输入验证码：".encode("gbk"))
-        return yzmCode
+    # def getYZM(self):
+        # yzmCode = raw_input(u"请输入验证码：".encode("gbk"))
+        # return yzmCode
