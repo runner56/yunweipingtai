@@ -74,7 +74,6 @@ class AbstractApi(object) :
                 continue
             else :
                 break
-        print response
         return self.__checkResponse(response) 
 
     @staticmethod
@@ -132,7 +131,6 @@ class AbstractApi(object) :
     def __checkResponse(response):
         errCode = response.get('errcode')
         errMsg = response.get('errmsg')
-        print response
         if errCode is 0:
             return response 
         else:

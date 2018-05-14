@@ -11,7 +11,7 @@ from PIL import Image
 
 from qywx import MsgManager
 
-PATH = os.getcwd() # 当前目录
+PATH = os.getcwd() # 当前目录，用于存储验证码图片
 ACCOUNTS = (
     {
         "user":"bupt_devilman@126.com",
@@ -24,7 +24,8 @@ ACCOUNTS = (
 
 # 初始化
 def initialDriver(msgManger):
-    msgManger.processMsg(u"初始化浏览器！")
+    timeStr = time.strftime("%H:%M:%S", time.localtime())
+    msgManger.sendMsg(u"{} {}".format(timeStr, u"初始化浏览器！"), "text")
     chrome_options = Options()
     # chrome_options.add_argument("--headless")
     #chrome_options.add_argument("--proxy-server=socks5://localhost:7001")
@@ -41,32 +42,68 @@ class jxy:
         self.keys      = []
         self.hoes      = []
         self.msgList   = []
-    
-    def clearContent(self): # 待完善
-        self.uCoin     = ""
-        self.keys      = []
-        self.hoes      = []
-        self.msgList   = []
+
+
+    # 把msgManger都封装了一遍
+    def sendMsg(self, msg, msgType="text"):
+        if msgType=="text":
+            timeStr = time.strftime("%H:%M:%S", time.localtime())
+            msg = u"{} {}".format(timeStr, msg)
+        self.msgManger.sendMsg(msg, msgType)
+
+    def appendMsgList(self, msg):
+        timeStr = time.strftime("%H:%M:%S", time.localtime())
+        msg = u"{} {}".format(timeStr, msg)
+        self.msgList.append(msg)
+
+    def sendMsgList(self, msgType="text"):
+        self.msgList.insert(0, u"账号：%s" % self.user)
+        self.msgList.append(self.uCoin)
+        self.msgList.append(u"钥匙: %s" % ",".join(self.keys))
+        self.msgList.append(u"锄头: %s" % ",".join(self.hoes))
+        msg = "\r\n".join(self.msgList)
+        self.msgManger.sendMsg(msg, "text")
+
+        # 清空内容
+        self.uCoin      = ""
+        self.keys       = []
+        self.hoes       = []
+        self.msgList    = []
+
+    def getYZM(self):
+        while True:
+            time.sleep(8)
+            yzm = self.msgManger.getYZM()
+            if yzm:
+                self.sendMsg(u"输入的验证码: %s" % yzm)
+                break
+        return yzm
 
     def requestUrl(self, url):
         self.driver.get(url)
         if self.driver.current_url != url:
+            self.sendMsg(u"ERROR：登录过期，需重新登录！")
             self.login()
             return True
         return False
-        # time.sleep(2)
 
     # 定时器
     def processJXYTimer(self):
-        self.msgManger.processMsg(u"启动定时器")
-        self.digMine()
-        self.forgeMineral()
-        self.processTreasure()
-        timer = threading.Timer(1200, self.processJXYTimer)
+        self.appendMsgList(u"启动定时器")
+        try:
+            self.digMine()
+            self.forgeMineral()
+            self.processTreasure()
+        except Exception,e:
+            import traceback  
+            msg = traceback.print_exc()
+            self.sendMsg(u"账号%s出现异常%s" % (self.user,msg))
+
+        timer = threading.Timer(200, self.processJXYTimer)
         timer.start()
-        self.msgManger.processMsg(u"定时器结束")
-        self.clearContent() # 待完善
-        self.msgManger.sendTextMsg()
+
+        self.appendMsgList(u"定时器结束")
+        self.sendMsgList() # 把储存的列表信息整理发出去
 
     # 登录
     def login(self):
@@ -76,7 +113,7 @@ class jxy:
         try:
             WebDriverWait(self.driver, 5, 0.5).until(EC.visibility_of_element_located(yzmLocator))
         except TimeoutException:
-            self.msgManger.directTransMsg(u"加载登录界面失败")
+            self.sendMsg(u"加载登录界面失败")
             return self.login()
         else:
             yzmElement = self.driver.find_element_by_class_name("J_validate_code")
@@ -95,29 +132,25 @@ class jxy:
             self.driver.find_element_by_id("account").send_keys(self.user)
             self.driver.find_element_by_id("password").send_keys(self.pwd)
             
-            self.msgManger.processMsg(os.path.join(PATH,"yzm.png"), "image")
-            self.msgManger.directTransMsg(u"输入验证码,格式:@+验证码")
+            self.sendMsg(os.path.join(PATH,"yzm.png"), "image")
+            self.sendMsg(u"输入验证码,格式:@+验证码")
 
-            while True:
-                time.sleep(8)
-                yzmCode = self.msgManger.getYZM()
-                if yzmCode:
-                    self.msgManger.directTransMsg(u"输入的验证码: %s" % yzmCode)
-                    break
             
-            # yzmCode = raw_input(u"请输入验证码：".encode("gbk"))
-            self.driver.find_element_by_id("code").send_keys(yzmCode)
+            yzm = self.getYZM() # 循环阻塞
+            
+            
+            self.driver.find_element_by_id("code").send_keys(yzm)
 
             self.driver.find_element_by_class_name("J_userlogin").click() # 点击登录
             userLinkLocator = (By.CSS_SELECTOR, "a.user-link")
             try:
                 WebDriverWait(self.driver, 8, 0.5).until(EC.visibility_of_element_located(userLinkLocator))
-                self.msgManger.directTransMsg(u"登录成功！")
+                self.sendMsg(u"登录成功！")
                 self.sign()
                 self.buyMineral()
                 return "LoginSuccess"
             except TimeoutException:
-                self.msgManger.directTransMsg(u"登录失败！")
+                self.sendMsg(u"登录失败！")
                 return self.login()
 
             
@@ -132,11 +165,11 @@ class jxy:
         try:
             WebDriverWait(self.driver, 5, 0.5).until(EC.element_to_be_clickable(signBtnLocator))
         except TimeoutException:
-            self.msgManger.processMsg(u"已完成签到，不必再签！")
+            self.appendMsgList(u"已完成签到，不必再签！")
         else:
             signBtn = self.driver.find_element_by_css_selector("i.icon.btn-sprite.sign-btn.J_sign")
             signBtn.click()
-            self.msgManger.processMsg(u"签到成功！")
+            self.appendMsgList(u"签到成功！")
             time.sleep(2)
             confirmSignBtn = self.driver.find_element_by_css_selector("i.little-btns.confirm.J_closeCommonFc")
             confirmSignBtn.click()
@@ -145,13 +178,25 @@ class jxy:
         # 判断是否达到累积签到
         reachBtns = self.driver.find_elements_by_xpath("//ul[@class='four-squares']/li/i")
         if len(reachBtns)==0:
-            self.msgManger.processMsg(u"累积签到定位有误")
+            self.appendMsgList(u"累积签到定位有误")
         for i,reachBtn in enumerate(reachBtns):
             if reachBtn.get_attribute("class")=="icon btn-sprite get-btn J_getPrize": #not-reached-btn, get-btn, got-btn
-                self.msgManger.processMsg(u"累积签到%d天，领取奖励" %(i*5+5))
+                self.appendMsgList(u"累积签到%d天，领取奖励" %(i*5+5))
                 reachBtn.click()
                 time.sleep(2)
                 break
+
+
+    def getUcoinNum(self):
+        """当前U币的数量"""
+        locator = (By.CSS_SELECTOR, "div.user-ubi")
+        try:
+            WebDriverWait(self.driver, 5, 0.5).until(EC.visibility_of_element_located(locator))
+        except TimeoutException:
+            self.appendMsgList(u"ERROR:无法定位到U币框！")
+            return
+        return self.driver.find_element_by_css_selector("div.user-ubi").text
+
 
     # 挖矿
     def digMine(self):
@@ -165,17 +210,17 @@ class jxy:
         try:
             WebDriverWait(self.driver, 5, 0.5).until(EC.element_to_be_clickable(gainMineralBtnLocator))
         except TimeoutException:
-            self.msgManger.processMsg(u"无矿石可以收获")
+            self.appendMsgList(u"无矿石可以收获")
         else:
             gainMineralBtn = self.driver.find_element_by_css_selector("div.btn_win")
             gainMineralBtn.click()
-            self.msgManger.processMsg(u"收获矿石成功")
+            self.appendMsgList(u"收获矿石成功")
             time.sleep(2)
             confirmSignBtn = self.driver.find_element_by_css_selector("i.little-btns.confirm.J_closeCommonFc")
             confirmSignBtn.click()
         try: # 通过锄头动画来判断是否在挖矿
             self.driver.find_element_by_css_selector("div.bar_runing")
-            # self.msgManger.processMsg(u"正在挖矿")
+            # self.appendMsgList(u"正在挖矿")
         except NoSuchElementException:
             # 选锄
             flag = False # 判断是否有锄头的标识
@@ -184,7 +229,7 @@ class jxy:
                 if hoe.text.find(u"未拥有")>-1:
                     continue
                 flag = True
-                self.msgManger.processMsg(u"使用锄头%s挖矿" % hoe.text.split("\n")[0])
+                self.appendMsgList(u"使用锄头%s挖矿" % hoe.text.split("\n")[0])
                 hoe.click()
                 time.sleep(2)
                 break
@@ -205,7 +250,6 @@ class jxy:
         for i in self.driver.find_elements_by_xpath("//span[@class='columns-yellow']"):
             self.hoes.append(i.text)
         
-        self.msgManger.hoes = self.hoes
 
     # 购买锄头
     def buyTool(self):
@@ -219,7 +263,7 @@ class jxy:
         try:
             WebDriverWait(self.driver, 10, 0.5).until(EC.element_to_be_clickable(buyBtnLocator))
         except TimeoutException:
-            self.msgManger.processMsg(u"ERROR:无法定位到购买按键！")
+            self.appendMsgList(u"ERROR:无法定位到购买按键！")
             return
         buyBtn = driver.find_element_by_xpath("//ul[@class='stones tools J_buyTools']/li[3]/i[@class='icon btn-sprite buy']")
         buyBtn.click()
@@ -227,7 +271,7 @@ class jxy:
         try:
             WebDriverWait(self.driver, 10, 0.5).until(EC.element_to_be_clickable(confirmBtnLocator))
         except TimeoutException:
-            self.msgManger.processMsg(u"ERROR:无法定位到确认按键！")
+            self.appendMsgList(u"ERROR:无法定位到确认按键！")
             return
         confirmBtn = driver.find_element_by_css_selector("i.little-btns.confirm.J_buyToolConfirm")
         confirmBtn.click()
@@ -235,11 +279,11 @@ class jxy:
         try:
             WebDriverWait(self.driver, 10, 0.5).until(EC.element_to_be_clickable(closeBtnLocator))
         except TimeoutException:
-            self.msgManger.processMsg(u"ERROR:无法定位到关闭按键！")
+            self.appendMsgList(u"ERROR:无法定位到关闭按键！")
             return
         closeBtn = driver.find_element_by_css_selector("i.little-btns.confirm.J_closeCommonFc")
         closeBtn.click()
-        self.msgManger.processMsg(u"成功购买一个鹤嘴锄")
+        self.appendMsgList(u"成功购买一个鹤嘴锄")
 
     # 购买矿石
     def buyMineral(self):
@@ -251,10 +295,10 @@ class jxy:
         try:
             WebDriverWait(self.driver, 10, 0.5).until(EC.visibility_of_element_located(locator))
         except:
-            self.msgManger.processMsg(u"ERROR:加载商店页面失败！")
+            self.appendMsgList(u"ERROR:加载商店页面失败！")
             return
 
-        # self.msgManger.processMsg(u"完成商店页面加载")
+        # self.appendMsgList(u"完成商店页面加载")
 
         mineralLocator = (By.CSS_SELECTOR, "i.icon.btn-sprite.buy")
         confirmBtnLocator = (By.CSS_SELECTOR, "i.little-btns.confirm.J_buyStoneConfirm")
@@ -266,7 +310,7 @@ class jxy:
                 mineralElement = self.driver.find_element_by_css_selector("i.icon.btn-sprite.buy")
                 mineralElement.click()
             except TimeoutException:
-                self.msgManger.processMsg(u"矿石已售完")
+                self.appendMsgList(u"矿石已售完")
                 break
 
             try:
@@ -274,7 +318,7 @@ class jxy:
                 confirmBuyBtn = self.driver.find_element_by_css_selector("i.little-btns.confirm.J_buyStoneConfirm") # 确认购买
                 confirmBuyBtn.click()
             except TimeoutException:
-                self.msgManger.processMsg(u"未弹出购买矿石确认框")
+                self.appendMsgList(u"未弹出购买矿石确认框")
                 break
 
             try:
@@ -282,10 +326,10 @@ class jxy:
                 successBuyBtn = self.driver.find_element_by_css_selector("i.little-btns.confirm.J_closeCommonFc") # 购买成功
                 successBuyBtn.click()
             except TimeoutException:
-                self.msgManger.processMsg(u"未弹出成功购买矿石的提示框！")
+                self.appendMsgList(u"未弹出成功购买矿石的提示框！")
                 break
 
-            self.msgManger.processMsg(u"成功购买矿石")
+            self.appendMsgList(u"成功购买矿石")
 
     # 锻造钥匙
     def forgeMineral(self):
@@ -297,7 +341,7 @@ class jxy:
         try:
             WebDriverWait(self.driver, 10, 0.5).until(EC.visibility_of_element_located(hallBottomLocator))
         except:
-            self.msgManger.processMsg(u"加载矿石商店失败，退出购买")
+            self.appendMsgList(u"加载矿石商店失败，退出购买")
             return
         
         takeOutKeyBtnLocator = (By.CSS_SELECTOR, "i.icon.btn-sprite.take-out.J_takeOut")
@@ -306,7 +350,7 @@ class jxy:
             try:
                 WebDriverWait(self.driver, 10, 0.5).until(EC.visibility_of_element_located(takeOutKeyBtnLocator))
             except TimeoutException:
-                self.msgManger.processMsg(u"无钥匙可取")
+                self.appendMsgList(u"无钥匙可取")
                 break #跳出循环
             else:
                 finishedKey = self.driver.find_element_by_css_selector("i.icon.btn-sprite.take-out.J_takeOut")
@@ -314,7 +358,7 @@ class jxy:
                 time.sleep(2)
                 confirmTakeBtn = self.driver.find_element_by_css_selector("i.little-btns.confirm.J_closeCommonFc")
                 confirmTakeBtn.click()
-                self.msgManger.processMsg(u"取出钥匙")
+                self.appendMsgList(u"取出钥匙")
                 time.sleep(2)
 
 
@@ -324,7 +368,7 @@ class jxy:
             try:
                 WebDriverWait(self.driver, 5, 0.5).until(EC.element_to_be_clickable(startForgeBtnLocator))
             except TimeoutException:
-                self.msgManger.processMsg(u"无空格可以锻造")
+                self.appendMsgList(u"无空格可以锻造")
                 break
             else:
                 emptyGrid = self.driver.find_element_by_css_selector("i.icon.btn-sprite.forge-it.J_startForge")
@@ -333,13 +377,13 @@ class jxy:
                 selectForgeBtns = self.driver.find_elements_by_css_selector("i.icon.little-btns.forge-it.J_forge")
                 if len(selectForgeBtns)>0:
                     selectForgeBtns[-1].click()
-                    self.msgManger.processMsg(u"锻造钥匙")
+                    self.appendMsgList(u"锻造钥匙")
                     time.sleep(2)
                     confirmForgeBtn = self.driver.find_element_by_css_selector("i.little-btns.confirm.J_sureForgeBtn")
                     confirmForgeBtn.click() # 注意，点击完确定后会刷新网页
                     time.sleep(10) # 点击完确定后会刷新网页，等待10s等它页面刷新完成
                 else:
-                    self.msgManger.processMsg(u"矿石不足")
+                    self.appendMsgList(u"矿石不足")
                     break
           
     # 合成宝箱
@@ -355,12 +399,12 @@ class jxy:
             try:
                 WebDriverWait(self.driver, 5, 0.5).until(EC.element_to_be_clickable(takeOutBtnLocator))
             except TimeoutException:
-                self.msgManger.processMsg(u"无可取出的钥匙")
+                self.appendMsgList(u"无可取出的钥匙")
                 break
             else:
                 takeOutBtn = self.driver.find_element_by_css_selector("a.key-btn.take-out")
                 takeOutBtn.click()
-                self.msgManger.processMsg(u"取出钥匙")
+                self.appendMsgList(u"取出钥匙")
                 time.sleep(2)
                 confirmBtn = self.driver.find_element_by_css_selector("i.little-btns.confirm.J_closeCommonFc")
                 confirmBtn.click()
@@ -369,53 +413,40 @@ class jxy:
         for i in self.driver.find_elements_by_xpath("//span[@class='key-count']/i[@class='count']"):
             self.keys.append(i.text)
 
-        self.msgManger.keys = self.keys            
-
         while True:
             try:
                 composeBtn = self.driver.find_element_by_xpath("//a[@class='key-btn compose'][not(@enabled)]")
             except NoSuchElementException:
-                self.msgManger.processMsg(u"无可合成的钥匙")
+                self.appendMsgList(u"无可合成的钥匙")
                 break
             else:
                 composeBtn.click()
-                self.msgManger.processMsg(u"合成钥匙")
+                self.appendMsgList(u"合成钥匙")
                 sureBtnLocator    = (By.CSS_SELECTOR, "i.little-btns.confirm.J_surecompose")
                 confirmBtnLocator = (By.CSS_SELECTOR, "i.little-btns.ok.J_closeCommonFc")
                 try:
                     WebDriverWait(self.driver, 5, 0.5).until(EC.element_to_be_clickable(sureBtnLocator))
                 except TimeoutException:
-                    self.msgManger.processMsg(u"未弹出合成提示框！")
+                    self.appendMsgList(u"未弹出合成提示框！")
                 else:
                     sureBtn = self.driver.find_element_by_css_selector("i.little-btns.confirm.J_surecompose")
                     sureBtn.click()
                 try:
                     WebDriverWait(self.driver, 5, 0.5).until(EC.element_to_be_clickable(confirmBtnLocator))
                 except TimeoutException:
-                    self.msgManger.processMsg(u"未弹出合成确认框！")
+                    self.appendMsgList(u"未弹出合成确认框！")
                 else:
                     confirmBtn = self.driver.find_element_by_css_selector("i.little-btns.ok.J_closeCommonFc")
                     confirmBtn.click()
 
         self.uCoin = self.getUcoinNum()   # 在合成宝箱之后获取当前的U币数量
-        self.msgManger.uCoin = self.uCoin
-
-    def getUcoinNum(self):
-        """当前U币的数量"""
-        locator = (By.CSS_SELECTOR, "div.user-ubi")
-        try:
-            WebDriverWait(self.driver, 5, 0.5).until(EC.visibility_of_element_located(locator))
-        except TimeoutException:
-            self.msgManger.processMsg(u"ERROR:无法定位到U币框！")
-            return
-        return self.driver.find_element_by_css_selector("div.user-ubi").text
 
 
 if __name__ == '__main__':
     for account in ACCOUNTS:
         user        = account["user"]
         pwd         = account["pwd"]
-        msgManger   = MsgManager(user)
+        msgManger   = MsgManager()
         driver      = initialDriver(msgManger)
         jxyInstance = jxy(driver, user, pwd, msgManger)
         loginStatus = jxyInstance.login()
