@@ -28,8 +28,8 @@ class MsgManager(WxMsgSender):
 
     def sendMsg(self, msg, msgType):
         print msg
-        self.sendWxMsg(msg, msgType)
+        self.sendWxMsg(msg.replace("\"",u"“"), msgType) # 替换双引号才能输出到wx？
 
     # def getYZM(self):
-        # yzmCode = raw_input(u"请输入验证码：".encode("gbk"))
-        # return yzmCode
+    #     yzmCode = raw_input(u"请输入验证码：".encode("gbk"))
+    #     return yzmCode

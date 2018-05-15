@@ -141,12 +141,12 @@ class jxy:
             userLinkLocator = (By.CSS_SELECTOR, "a.user-link")
             try:
                 WebDriverWait(self.driver, 8, 0.5).until(EC.visibility_of_element_located(userLinkLocator))
-                self.sendMsg(u"登录成功！")
+                self.sendMsg(u"%s登录成功！" % self.user)
                 self.sign()
                 self.buyMineral()
                 return "LoginSuccess"
             except TimeoutException:
-                self.sendMsg(u"登录失败！")
+                self.sendMsg(u"%s登录失败！" % self.user)
                 return self.login()
 
             
@@ -203,20 +203,29 @@ class jxy:
             return
         # 收矿
         gainMineralBtnLocator = (By.CSS_SELECTOR, "div.btn_win")
+        closeMsgLocator = (By.XPATH, "//div[@class='common-fuceng-box']//div[@class='awardText']")
+        closeBtnLocator = (By.CSS_SELECTOR, "i.little-btns.confirm.J_closeCommonFc")
         try:
             WebDriverWait(self.driver, 5, 0.5).until(EC.element_to_be_clickable(gainMineralBtnLocator))
         except TimeoutException:
             self.appendMsgList(u"无矿石可以收获")
         else:
-            gainMineralBtn = self.driver.find_element_by_css_selector("div.btn_win")
+            gainMineralBtn = self.driver.find_element(*gainMineralBtnLocator)
             gainMineralBtn.click()
-            self.appendMsgList(u"收获矿石成功")
-            time.sleep(2)
-            confirmSignBtn = self.driver.find_element_by_css_selector("i.little-btns.confirm.J_closeCommonFc")
-            confirmSignBtn.click()
+            
+            try:
+                WebDriverWait(self.driver, 5, 0.5).until(EC.element_to_be_clickable(closeBtnLocator))
+                # WebDriverWait(self.driver, 5, 0.5).until(EC.visibility_of_element_located(closeMsgLocator))
+            except TimeoutException:
+                self.appendMsgList(u"ERROR:定位关闭按键失败！")
+            else:
+                closeMsg = u",".join([i.text for i in self.driver.find_elements(*closeMsgLocator)])
+                self.appendMsgList(u"收获矿石%s" % closeMsg)
+                self.driver.find_element(*closeBtnLocator).click()
         try: # 通过锄头动画来判断是否在挖矿
             self.driver.find_element_by_css_selector("div.bar_runing")
-            # self.appendMsgList(u"正在挖矿")
+            countDown = self.driver.find_element_by_css_selector("div.countDown").text
+            self.appendMsgList(u"正在挖矿，剩余时间%s" % countDown)
         except NoSuchElementException:
             # 选锄
             flag = False # 判断是否有锄头的标识
@@ -230,8 +239,9 @@ class jxy:
                 time.sleep(2)
                 break
             if flag == False:
-                self.buyTool()
-                self.digMine() # 如何避免死循环？
+                if self.buyTool():
+                    self.digMine()
+                return
             else:
                 # 选矿
                 mineralHoleBtn = self.driver.find_element_by_css_selector("div.mine.mine"+str(random.randint(1,3)))
@@ -242,9 +252,9 @@ class jxy:
                 btnOk.click()
                 time.sleep(2)
 
-        # 挖矿后获取锄头的数量
-        for i in self.driver.find_elements_by_xpath("//span[@class='columns-yellow']"):
-            self.hoes.append(i.text)
+                # 挖矿后获取锄头的数量
+                for i in self.driver.find_elements_by_xpath("//span[@class='columns-yellow']"):
+                    self.hoes.append(i.text)
         
 
     # 购买锄头
@@ -252,15 +262,16 @@ class jxy:
         url = "http://www.juxiangyou.com/forge/shop?type=tool"
         isRedirect = self.requestUrl(url)
         if isRedirect:
-            return
+            return False
         buyBtnLocator = (By.XPATH, "//ul[@class='stones tools J_buyTools']/li[3]/i[@class='icon btn-sprite buy']")
         confirmBtnLocator = (By.CSS_SELECTOR, "i.little-btns.confirm.J_buyToolConfirm")
         closeBtnLocator = (By.CSS_SELECTOR, "i.little-btns.confirm.J_closeCommonFc")
+        closeMsgLocator = (By.XPATH, "//div[@class='common-fuceng-box']//div[@class='text']")
         try:
             WebDriverWait(self.driver, 10, 0.5).until(EC.element_to_be_clickable(buyBtnLocator))
         except TimeoutException:
             self.appendMsgList(u"ERROR:无法定位到购买按键！")
-            return
+            return False
         buyBtn = self.driver.find_element(*buyBtnLocator)
         buyBtn.click()
         
@@ -268,18 +279,22 @@ class jxy:
             WebDriverWait(self.driver, 10, 0.5).until(EC.element_to_be_clickable(confirmBtnLocator))
         except TimeoutException:
             self.appendMsgList(u"ERROR:无法定位到确认按键！")
-            return
-        confirmBtn = driver.find_element_by_css_selector("i.little-btns.confirm.J_buyToolConfirm")
+            return False
+        confirmBtn = self.driver.find_element(*confirmBtnLocator)
         confirmBtn.click()
 
         try:
             WebDriverWait(self.driver, 10, 0.5).until(EC.element_to_be_clickable(closeBtnLocator))
         except TimeoutException:
             self.appendMsgList(u"ERROR:无法定位到关闭按键！")
-            return
-        closeBtn = driver.find_element_by_css_selector("i.little-btns.confirm.J_closeCommonFc")
+            return False
+        closeMsg = self.driver.find_element(*closeMsgLocator).text.strip()
+        closeBtn = self.driver.find_element(*closeBtnLocator)
         closeBtn.click()
-        self.appendMsgList(u"成功购买一个鹤嘴锄")
+        self.appendMsgList(closeMsg)
+        if closeMsg == u"U币不足，购买失败！":
+            return False
+        return True #u"U币不足，购买失败！":
 
     # 购买矿石
     def buyMineral(self):
@@ -298,33 +313,33 @@ class jxy:
 
         mineralLocator = (By.CSS_SELECTOR, "i.icon.btn-sprite.buy")
         confirmBtnLocator = (By.CSS_SELECTOR, "i.little-btns.confirm.J_buyStoneConfirm")
-        successBuyLocator = (By.CSS_SELECTOR, "i.little-btns.confirm.J_closeCommonFc")
+        closeBtnLocator = (By.CSS_SELECTOR, "i.little-btns.confirm.J_closeCommonFc")
 
         while True:
             try:
                 WebDriverWait(self.driver, 10, 0.5).until(EC.visibility_of_element_located(mineralLocator))
-                mineralElement = self.driver.find_element_by_css_selector("i.icon.btn-sprite.buy")
-                mineralElement.click()
             except TimeoutException:
                 self.appendMsgList(u"矿石已售完")
                 break
+            mineralElement = self.driver.find_element_by_css_selector(*mineralLocator)
+            mineralElement.click()
 
             try:
                 WebDriverWait(self.driver, 10, 0.5).until(EC.visibility_of_element_located(confirmBtnLocator))
-                confirmBuyBtn = self.driver.find_element_by_css_selector("i.little-btns.confirm.J_buyStoneConfirm") # 确认购买
-                confirmBuyBtn.click()
             except TimeoutException:
                 self.appendMsgList(u"未弹出购买矿石确认框")
                 break
+            confirmBuyBtn = self.driver.find_element_by_css_selector(*confirmBtnLocator) # 确认购买
+            confirmBuyBtn.click()
 
             try:
-                WebDriverWait(self.driver, 10, 0.5).until(EC.visibility_of_element_located(successBuyLocator))
-                successBuyBtn = self.driver.find_element_by_css_selector("i.little-btns.confirm.J_closeCommonFc") # 购买成功
-                successBuyBtn.click()
+                WebDriverWait(self.driver, 10, 0.5).until(EC.visibility_of_element_located(closeBtnLocator))
             except TimeoutException:
                 self.appendMsgList(u"未弹出成功购买矿石的提示框！")
                 break
-
+            closeBtn = self.driver.find_element(*closeBtnLocator) # 购买成功
+            closeBtn.click()
+            
             self.appendMsgList(u"成功购买矿石")
 
     # 锻造钥匙
