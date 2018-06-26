@@ -9,10 +9,11 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from PIL import Image
 
-from qywx import MsgManager
 
 sys.path.append("..")
 from conf import JXY_Conf 
+from emailapi import emailApi
+from qywx import MsgManager
 
 PATH = os.getcwd() # 当前目录，用于存储验证码图片
 ACCOUNTS = JXY_Conf["ACCOUNTS"]
@@ -24,7 +25,7 @@ def initialDriver(msgManger):
     msgManger.sendMsg(u"{} {}".format(timeStr, u"初始化浏览器！"), "text")
     chrome_options = Options()
     # chrome_options.add_argument("--headless")
-    #chrome_options.add_argument("--proxy-server=socks5://localhost:7001")
+    # chrome_options.add_argument("--proxy-server=socks5://localhost:7001")
     driver = webdriver.Chrome(chrome_options=chrome_options)
     return driver
 
@@ -38,6 +39,7 @@ class jxy:
         self.keys      = []
         self.hoes      = []
         self.msgList   = []
+        self.emailApi  = emailApi()
 
 
     # 把msgManger都封装了一遍
@@ -57,7 +59,8 @@ class jxy:
         self.msgList.append(self.uCoin)
         self.msgList.append(u"钥匙: %s" % ",".join(self.keys))
         self.msgList.append(u"锄头: %s" % ",".join(self.hoes))
-        msg = "\r\n".join(self.msgList)
+        # msg = "\r\n".join(self.msgList)
+        msg = "\r\n".join([unicode(i) for i in self.msgList]) # 解决msgList出现None的问题
         self.msgManger.sendMsg(msg, "text")
 
         # 清空内容
@@ -67,12 +70,17 @@ class jxy:
         self.msgList    = []
 
     def getYZM(self):
+        # x = emailApi()
+
         while True:
             time.sleep(8)
             yzm = self.msgManger.getYZM()
+            if yzm==None:
+                yzm = self.emailApi.recvEmail()
             if yzm:
-                self.sendMsg(u"输入的验证码: %s" % yzm)
+                print yzm
                 break
+        self.sendMsg(u"输入的验证码: %s" % yzm)
         return yzm
 
     def requestUrl(self, url):
@@ -130,7 +138,6 @@ class jxy:
             
             self.sendMsg(os.path.join(PATH,"yzm.png"), "image")
             self.sendMsg(u"输入验证码,格式:@+验证码")
-
             
             yzm = self.getYZM() # 循环阻塞
             
@@ -143,7 +150,7 @@ class jxy:
                 WebDriverWait(self.driver, 8, 0.5).until(EC.visibility_of_element_located(userLinkLocator))
                 self.sendMsg(u"%s登录成功！" % self.user)
                 self.sign()
-                self.buyMineral()
+                # self.buyMineral() # 18.5.23不需要购买矿石了，亏本
                 return "LoginSuccess"
             except TimeoutException:
                 self.sendMsg(u"%s登录失败！" % self.user)
@@ -252,9 +259,9 @@ class jxy:
                 btnOk.click()
                 time.sleep(2)
 
-                # 挖矿后获取锄头的数量
-                for i in self.driver.find_elements_by_xpath("//span[@class='columns-yellow']"):
-                    self.hoes.append(i.text)
+        # 挖矿后获取锄头的数量
+        for i in self.driver.find_elements_by_xpath("//span[@class='columns-yellow']"):
+            self.hoes.append(i.text)
         
 
     # 购买锄头
@@ -321,7 +328,7 @@ class jxy:
             except TimeoutException:
                 self.appendMsgList(u"矿石已售完")
                 break
-            mineralElement = self.driver.find_element_by_css_selector(*mineralLocator)
+            mineralElement = self.driver.find_element(*mineralLocator)
             mineralElement.click()
 
             try:
@@ -329,7 +336,7 @@ class jxy:
             except TimeoutException:
                 self.appendMsgList(u"未弹出购买矿石确认框")
                 break
-            confirmBuyBtn = self.driver.find_element_by_css_selector(*confirmBtnLocator) # 确认购买
+            confirmBuyBtn = self.driver.find_element(*confirmBtnLocator) # 确认购买
             confirmBuyBtn.click()
 
             try:
@@ -375,6 +382,7 @@ class jxy:
 
         # 往空的锻造框锻造钥匙
         startForgeBtnLocator = (By.CSS_SELECTOR, "i.icon.btn-sprite.forge-it.J_startForge")
+        selectForgeBtns 
         while True:
             try:
                 WebDriverWait(self.driver, 5, 0.5).until(EC.element_to_be_clickable(startForgeBtnLocator))
@@ -382,8 +390,7 @@ class jxy:
                 self.appendMsgList(u"无空格可以锻造")
                 break
             else:
-                emptyGrid = self.driver.find_element_by_css_selector("i.icon.btn-sprite.forge-it.J_startForge")
-                emptyGrid.click() # 不可点击？？？？
+                self.driver.find_element(*startForgeBtnLocator).click()
                 time.sleep(2)
                 selectForgeBtns = self.driver.find_elements_by_css_selector("i.icon.little-btns.forge-it.J_forge")
                 if len(selectForgeBtns)>0:

@@ -91,10 +91,18 @@ class getYZM(Resource):
             YZM = ""
         return yzm
 
+class setYZM(Resource):
+    def get(self):
+        global YZM
+        yzm = request.args.get("yzm")
+        YZM = yzm
+        return "success"
+
 # 验证地址类似http://api.3dept.com/?msg_signature=ASDFQWEXZCVAQFASDFASDFSS&timestamp=13500001234&nonce=123412323&echostr=ENCRYPT_STR
 api.add_resource(receiveMsg, "/")
 api.add_resource(sendMsg, "/sendMsg")
 api.add_resource(getYZM, "/getYZM")
+api.add_resource(setYZM, "/sendYZM")
 
 if __name__ == "__main__":
     app.run(debug=True, host=ServerHost, port=ServerPort)
