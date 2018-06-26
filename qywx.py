@@ -3,9 +3,12 @@ import requests, time
 
 
 class WxMsgSender(object):
+    url = "http://127.0.0.1:7001/"
+    
     def __init__(self):
-        self.url = "http://127.0.0.1:7001/"
+        super(WxMsgSender, self).__init__()
 
+    @classmethod
     def sendWxMsg(self, msg, type):
         """
             type:text/image

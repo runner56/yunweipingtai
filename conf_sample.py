@@ -27,3 +27,10 @@ Flask_Conf = {
     "ServerHost":"127.0.0.1",
     "ServerPort":7001
 }
+
+EMAIL_OPTIONS = {
+    "HOST":"pop.qq.com",
+    "PORT":995,
+    "USER":"xxx@qq.com",
+    "PASS":"xxx"
+}

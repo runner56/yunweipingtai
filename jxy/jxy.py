@@ -24,7 +24,7 @@ def initialDriver(msgManger):
     msgManger.sendMsg(u"{} {}".format(timeStr, u"初始化浏览器！"), "text")
     chrome_options = Options()
     # chrome_options.add_argument("--headless")
-    #chrome_options.add_argument("--proxy-server=socks5://localhost:7001")
+    # chrome_options.add_argument("--proxy-server=socks5://localhost:7001")
     driver = webdriver.Chrome(chrome_options=chrome_options)
     return driver
 
@@ -57,7 +57,8 @@ class jxy:
         self.msgList.append(self.uCoin)
         self.msgList.append(u"钥匙: %s" % ",".join(self.keys))
         self.msgList.append(u"锄头: %s" % ",".join(self.hoes))
-        msg = "\r\n".join(self.msgList)
+        # msg = "\r\n".join(self.msgList)
+        msg = "\r\n".join([unicode(i) for i in self.msgList]) # 解决msgList出现None的问题
         self.msgManger.sendMsg(msg, "text")
 
         # 清空内容
@@ -143,7 +144,7 @@ class jxy:
                 WebDriverWait(self.driver, 8, 0.5).until(EC.visibility_of_element_located(userLinkLocator))
                 self.sendMsg(u"%s登录成功！" % self.user)
                 self.sign()
-                self.buyMineral()
+                # self.buyMineral() # 18.5.23不需要购买矿石了，亏本
                 return "LoginSuccess"
             except TimeoutException:
                 self.sendMsg(u"%s登录失败！" % self.user)
@@ -252,9 +253,9 @@ class jxy:
                 btnOk.click()
                 time.sleep(2)
 
-                # 挖矿后获取锄头的数量
-                for i in self.driver.find_elements_by_xpath("//span[@class='columns-yellow']"):
-                    self.hoes.append(i.text)
+        # 挖矿后获取锄头的数量
+        for i in self.driver.find_elements_by_xpath("//span[@class='columns-yellow']"):
+            self.hoes.append(i.text)
         
 
     # 购买锄头
@@ -321,7 +322,7 @@ class jxy:
             except TimeoutException:
                 self.appendMsgList(u"矿石已售完")
                 break
-            mineralElement = self.driver.find_element_by_css_selector(*mineralLocator)
+            mineralElement = self.driver.find_element(*mineralLocator)
             mineralElement.click()
 
             try:
@@ -329,7 +330,7 @@ class jxy:
             except TimeoutException:
                 self.appendMsgList(u"未弹出购买矿石确认框")
                 break
-            confirmBuyBtn = self.driver.find_element_by_css_selector(*confirmBtnLocator) # 确认购买
+            confirmBuyBtn = self.driver.find_element(*confirmBtnLocator) # 确认购买
             confirmBuyBtn.click()
 
             try:
