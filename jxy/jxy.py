@@ -75,7 +75,7 @@ class jxy:
         while True:
             time.sleep(8)
             yzm = self.msgManger.getYZM()
-            if yzm==None:
+            if yzm in [None,""]:
                 yzm = self.emailApi.recvEmail()
             if yzm:
                 print yzm
@@ -382,7 +382,6 @@ class jxy:
 
         # 往空的锻造框锻造钥匙
         startForgeBtnLocator = (By.CSS_SELECTOR, "i.icon.btn-sprite.forge-it.J_startForge")
-        selectForgeBtns 
         while True:
             try:
                 WebDriverWait(self.driver, 5, 0.5).until(EC.element_to_be_clickable(startForgeBtnLocator))

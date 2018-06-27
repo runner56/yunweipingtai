@@ -3,6 +3,7 @@
 import poplib, email, datetime, time
 from conf import EMAIL_OPTIONS
 
+OPTIONS = EMAIL_OPTIONS
 class emailApi(object):
     def __init__(self):
         self.host = OPTIONS.get("HOST")
