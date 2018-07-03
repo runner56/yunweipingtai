@@ -1,6 +1,6 @@
 #-*- coding:utf8 -*-
 
-import os, sys, time, threading, random
+import os, sys, time, threading, random, datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
@@ -18,6 +18,7 @@ from qywx import MsgManager
 PATH = os.getcwd() # 当前目录，用于存储验证码图片
 ACCOUNTS = JXY_Conf["ACCOUNTS"]
 TIMER = JXY_Conf["TIMER"]
+driverList = []
 
 # 初始化
 def initialDriver(msgManger):
@@ -71,7 +72,6 @@ class jxy:
 
     def getYZM(self):
         # x = emailApi()
-
         while True:
             time.sleep(8)
             yzm = self.msgManger.getYZM()
@@ -458,14 +458,38 @@ class jxy:
 
         self.uCoin = self.getUcoinNum()   # 在合成宝箱之后获取当前的U币数量
 
-
-if __name__ == '__main__':
+def start():
+    global driverList
     for account in ACCOUNTS:
         user        = account["user"]
         pwd         = account["pwd"]
         msgManger   = MsgManager()
         driver      = initialDriver(msgManger)
         jxyInstance = jxy(driver, user, pwd, msgManger)
+        driverList.append(driver)
         loginStatus = jxyInstance.login()
         if loginStatus == "LoginSuccess":
             jxyInstance.processJXYTimer()
+
+def restart():
+    global driverList
+    for driver in driverList:
+        driver.quit()
+    del driverList[:]
+    main()
+
+def getTimeDelta():
+    now = datetime.datetime.now()
+    tom = datetime.datetime.now() + datetime.timedelta(days=1)
+    tom1 = datetime.datetime(year=tom.year, month=tom.month, day=tom.day, hour=7, minute=30)
+    delta = tom1 - now
+    return delta.total_seconds()
+
+def main():
+    start()
+    timedelta = getTimeDelta()
+    threading.Timer(timedelta, restart).start()
+
+if __name__ == '__main__':
+    main()
+
