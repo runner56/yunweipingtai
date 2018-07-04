@@ -30,9 +30,16 @@ class MsgManager(WxMsgSender):
         super(MsgManager, self).__init__()
 
     def sendMsg(self, msg, msgType):
-        # print msg
         self.sendWxMsg(msg.replace("\"",u"“"), msgType) # 替换双引号才能输出到wx？
 
-    # def getYZM(self):
-    #     yzmCode = raw_input(u"请输入验证码：".encode("gbk"))
-    #     return yzmCode
+
+class TestMsgManager(WxMsgSender):
+    def __init__(self):
+        super(TestMsgManager, self).__init__()
+
+    def sendMsg(self, msg, msgType):
+        print msg
+
+    def getYZM(self):
+        yzmCode = raw_input(u"请输入验证码：".encode("gbk"))
+        return yzmCode

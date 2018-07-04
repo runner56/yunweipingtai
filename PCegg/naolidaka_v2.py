@@ -281,7 +281,10 @@ userDict = [{
         },{
         "userid":"10021849",    # 惠清
         "token":"kaw8cr54jc96qal57cs838ua8tzu11spagrafek9"
-    }]
+        },{
+        "userid":"10062246",    # 妈
+        "token":"rtzktrsuze7891r8rrs91puu8u46cpcguc377bpt"
+        }]
 
 def getTimeDelta():
     now = datetime.datetime.now()
