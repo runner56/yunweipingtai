@@ -119,12 +119,11 @@ def start():
         ww91Instance.vote()
         ww91Instance.sendMsgList()
 
-def restart():
+def quit():
     global driverList
     for driver in driverList:
         driver.quit()
     del driverList[:]
-    main()
 
 def getTimeDelta():
     now = datetime.datetime.now()
@@ -136,7 +135,8 @@ def getTimeDelta():
 def main():
     start()
     timedelta = getTimeDelta()
-    threading.Timer(timedelta, restart).start()
+    threading.Timer(timedelta, main).start()
+    quit()
 
 if __name__ == '__main__':
     main()
