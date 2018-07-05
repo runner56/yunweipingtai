@@ -12,7 +12,7 @@ from PIL import Image
 sys.path.append("..")
 from conf import WW91_Conf 
 from emailapi import emailApi
-if sys.argv[1]=="test":
+if len(sys.argv)>1 and sys.argv[1]=="test":
     from qywx import TestMsgManager as MsgManager
 else:
     from qywx import MsgManager
@@ -40,6 +40,24 @@ class wenwen91(object):
         self.msgList   = []
         self.emailApi  = emailApi()
 
+    # 把msgManger都封装了一遍
+    def sendMsg(self, msg, msgType="text"):
+        if msgType=="text":
+            timeStr = time.strftime("%H:%M:%S", time.localtime())
+            msg = u"{} {}".format(timeStr, msg)
+        self.msgManger.sendMsg(msg, msgType)
+
+    def appendMsgList(self, msg):
+        timeStr = time.strftime("%H:%M:%S", time.localtime())
+        msg = u"{} {}".format(timeStr, msg)
+        self.msgList.append(msg)
+
+    def sendMsgList(self, msgType="text"):
+        msg = "\r\n".join([unicode(i) for i in self.msgList]) # 解决msgList出现None的问题
+        self.msgManger.sendMsg(msg, "text")
+        # 清空内容
+        self.msgList    = []
+
     def login(self):
         url = "https://www.91wenwen.net/user/login"
         self.driver.get(url)
@@ -47,12 +65,25 @@ class wenwen91(object):
         self.driver.find_element_by_id("login_password").send_keys(self.pwd)
         self.driver.find_element_by_class_name("login-btn").click()
 
+    def getRewardPoint(self):
+        url = "https://www.91wenwen.net/"
+        self.driver.get(url)
+        rewardPointLocator = (By.XPATH, "//div[@class='rewardPoint pull-left']/i")
+        try:
+            WebDriverWait(self.driver, 10, 0.5).until(EC.visibility_of_element_located, rewardPointLocator)
+        except TimeoutException:
+            self.appendMsgList(u"没有查到调查分值！")
+        else:
+            rewardPoints = self.driver.find_elements(*rewardPointLocator)
+            for rewardPoint in rewardPoints:
+                self.appendMsgList(rewardPoint.text)
+
     def vote(self):
         url = "https://www.91wenwen.net/vote/index"
-        voteBtnLocator = (By.CSS_SELECTOR, "a.vote-btn.btn")
+        voteBtnLocator = (By.XPATH, "//a[@class='vote-btn btn']")
         selectRadioLocator = (By.ID, "answer_number_"+str(random.randint(1, 6)))
         while True:
-            self.driver.get(url)
+            self.driver.get(url) # 没有刷新？
             try:
                 WebDriverWait(self.driver, 6, 0.5).until(EC.element_to_be_clickable(voteBtnLocator))
             except TimeoutException:
@@ -67,6 +98,12 @@ class wenwen91(object):
                     break
                 else:
                     self.driver.find_element(*selectRadioLocator).click()
+                    try:
+                        self.driver.find_element_by_css_selector("input.btn.submit").click()
+                    except:
+                        self.appendMsgList(u"未定位到投票按钮")
+                        break
+                    self.appendMsgList(u"完成投票！")
 
 
 def start():
@@ -77,10 +114,10 @@ def start():
         driver      = initialDriver(msgManger)
         ww91Instance = wenwen91(driver, user, pwd, msgManger)
         driverList.append(driver)
-        ww91Instance.vote()
         loginStatus = ww91Instance.login()
-        if loginStatus == "LoginSuccess":
-            jxyInstance.sign()
+        ww91Instance.getRewardPoint()
+        ww91Instance.vote()
+        ww91Instance.sendMsgList()
 
 def restart():
     global driverList
