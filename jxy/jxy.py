@@ -99,15 +99,20 @@ class jxy:
             self.forgeMineral()
             self.processTreasure()
         except Exception,e:
-            import traceback  
+            import traceback
             msg = traceback.format_exc()
             self.sendMsg(u"账号%s出现异常%s" % (self.user,msg))
 
-        timer = threading.Timer(TIMER, self.processJXYTimer)
-        timer.start()
-
-        self.appendMsgList(u"定时器结束")
-        self.sendMsgList() # 把储存的列表信息整理发出去
+        try:
+            self.driver.current_window_handle
+        except:
+            self.sendMsg(u"无法定位到driver的handle，退出定时器！")
+        else:
+            timer = threading.Timer(TIMER, self.processJXYTimer)
+            timer.start()
+        finally:
+            self.appendMsgList(u"定时器结束")
+            self.sendMsgList() # 把储存的列表信息整理发出去
 
     # 登录
     def login(self):
