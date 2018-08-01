@@ -114,10 +114,14 @@ def start():
         driver      = initialDriver(msgManger)
         ww91Instance = wenwen91(driver, user, pwd, msgManger)
         driverList.append(driver)
-        loginStatus = ww91Instance.login()
-        ww91Instance.getRewardPoint()
-        ww91Instance.vote()
-        ww91Instance.sendMsgList()
+        try:
+            loginStatus = ww91Instance.login()
+            ww91Instance.getRewardPoint()
+            ww91Instance.vote()
+            ww91Instance.sendMsgList()
+        except:
+            import traceback
+            msgManger.sendMsg(traceback.format_exc(), "text")
 
 def quit():
     global driverList
