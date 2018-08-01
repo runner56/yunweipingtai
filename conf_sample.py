@@ -20,6 +20,24 @@ JXY_Conf = {
     "TIMER":1200, #1200秒启动一次
 }
 
+WW91_Conf = {
+    "ACCOUNTS" : (
+        {
+            "user":"xx",
+            "pwd":"xx"
+        },
+    ),
+}
+
+P2PEYE_Conf = {
+    "ACCOUNTS" : (
+        {
+            "user":"xx",
+            "pwd":"xx"
+        },
+    ),
+}
+
 Flask_Conf = {
     "sToken":"",
     "sEncodingAESKey":"",

@@ -26,7 +26,7 @@ class emailApi(object):
             print traceback.format_exc()
             return None
 
-        print u"登录成功！"
+        print u"邮箱登录成功！"
         return connection
 
     def parseMailSubject(self, msg):
