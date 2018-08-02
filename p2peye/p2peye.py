@@ -67,11 +67,17 @@ class p2peye(object):
         try:
             WebDriverWait(self.driver, 8, 0.5).until(EC.visibility_of_element_located(userNameLocator))
         except TimeoutException:
-            raise Exception, u"Error:登录界面定位失败！"
+            raise Exception, u"P2Peye Error:登录界面定位失败！"
         else:
             self.driver.find_element(*userNameLocator).send_keys(self.user)
             self.driver.find_element(*pwdLocator).send_keys(self.pwd)
-            self.driver.find_element_by_id("login-ty-sub").click()
+            self.driver.find_element_by_id("login-ty-sub").click() # POST登录，后续还得再判断登录是否成功
+        
+        promptLocator = (By.ID, "myprompt")
+        try:
+            WebDriverWait(self.driver, 8, 0.5).until(EC.visibility_of_element_located(promptLocator))
+        except TimeoutException:
+            raise Exception, u"P2Peye Error:登录无响应！"
 
     def getReward(self):
         url = "https://licai.p2peye.com/club"
@@ -83,8 +89,10 @@ class p2peye(object):
             # import pdb;pdb.set_trace()
             self.sendMsg(u"Error:签到按钮定位失败！")
         else:
-            self.driver.find_element(*signBtnLocator).click()
+            # self.driver.find_element(*signBtnLocator).click() # 无法点击，不知道原因
+            self.driver.execute_script("document.getElementById('signBtn').click()") # 使用js来模拟点击
             self.sendMsg(u"P2P天眼签到成功！")
+        self.driver.execute_script("window.scrollTo(1000,0)") # 滚动到最右端，方便截图
         self.driver.save_screenshot("xx.png") # 这也是把整个页面截取下来了
         self.sendMsg(os.path.join(PATH,"xx.png"), "image")
 
@@ -100,7 +108,6 @@ def start():
             loginStatus = p2peyeInstance.login()
             p2peyeInstance.getReward()
         except:
-            # import pdb;pdb.set_trace()
             import traceback
             msgManger.sendMsg(traceback.format_exc(), "text")
 
