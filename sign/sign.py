@@ -1,5 +1,5 @@
 # -*- coding:utf8 -*-
-import sys, time
+import sys, time, datetime, threading
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
@@ -51,5 +51,5 @@ def main():
     quit()
 
 if __name__ == '__main__':
-    # main()
-    start()
+    main()
+    # start()
