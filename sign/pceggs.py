@@ -61,12 +61,20 @@ class PCeggs(object):
             self.__input_login_info(user, pwd)
 
     def __sign(self):
-        signBtnLocator = (By.ID, "qiandao")
+        signBtnLocator = (By.XPATH, "//a[contains(text(),'\xe4\xbb\x8a\xe6\x97\xa5\xe7\xad\xbe\xe5\x88\xb0')]") #这里最好输入编码，今日签到转为utf8
+        url = "http://www.pceggs.com/signIn/signIn.aspx"
         try:
-            WebDriverWait(self.driver, 10, 0.5).until(EC.element_to_be_clickable(signBtnLocator))
-            self.driver.find_element(*signBtnLocator).click()
+            WebDriverWait(self.driver, 10, 0.5).until(EC.visibility_of_element_located(signBtnLocator))
+            self.driver.get(url)
         except TimeoutException:
-            raise Exception, u"PCeggs:登录失败，未定位到签到按钮!"
+            raise Exception, u"PCeggs:未定位到主页标识，可能已完成签到!"
+        else:
+            signDivLocator = (By.XPATH, "//div[contains(text(),'立即签到')]")
+            try:
+                WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located(signDivLocator))
+                self.driver.find_element(*signDivLocator).click()
+            except TimeoutException:
+                raise Exception, u"PCeggs:签到失败，未定位到签到按钮!"
         finally:
             time.sleep(2)
             self.__screenshot()
@@ -98,8 +106,8 @@ class PCeggs(object):
     def __screenshot(self):
         self.driver.execute_script("window.scrollTo(1000,0)")
         self.driver.save_screenshot("save_screenshot.png")
-        self.sendMsg(os.path.join(PATH, "save_screenshot.png"), "image")
+        self.msgManager.sendMsg(os.path.join(PATH, "save_screenshot.png"), "image")
 
     def __flushcookie(self):
-        self.driver.delete_all_cookies()    # 无效？
+        self.driver.delete_all_cookies()
 
