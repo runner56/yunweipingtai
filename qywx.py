@@ -29,7 +29,7 @@ class MsgManager(WxMsgSender):
     def __init__(self):
         super(MsgManager, self).__init__()
 
-    def sendMsg(self, msg, msgType):
+    def sendMsg(self, msg, msgType): # 传入的msg必须是unicode的
         self.sendWxMsg(msg.replace("\"",u"“"), msgType) # 替换双引号才能输出到wx？
 
 

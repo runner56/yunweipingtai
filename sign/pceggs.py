@@ -13,9 +13,9 @@ sys.path.append("..")
 from conf import PCEGGS_ACCOUNTS
 from emailapi import emailApi
 
-PATH = os.getcwd()
-
 class PCeggs(object):
+    __path = os.getcwd()
+
     def __init__(self, driver, msgManager):
         self.driver     = driver
         self.msgManager = msgManager
@@ -27,8 +27,10 @@ class PCeggs(object):
             try:
                 self.__login(user, pwd)
                 self.__sign()
-            except Exception as e:
-                self.msgManager.sendMsg(e.message, "text")
+            except:
+                import traceback
+                self.msgManger.sendMsg(traceback.format_exc().decode("utf8"), "text")
+                # 必须进行utf8解码，要不然注释的中文是utf8编码的。在后面用replace会出现编码错误。
             self.__flushcookie()
 
 
@@ -88,7 +90,7 @@ class PCeggs(object):
         im = Image.open("xx.png")
         im = im.crop((left, top, right, bottom))
         im.save("yzm.png")
-        self.msgManager.sendMsg(os.path.join(PATH, "yzm.png"), "image")
+        self.msgManager.sendMsg(os.path.join(self.__path, "yzm.png"), "image")
         self.msgManager.sendMsg(u"PCeggs:输入验证码,格式:@+验证码", "text")
 
     def __getYZM(self):
@@ -96,7 +98,7 @@ class PCeggs(object):
             time.sleep(8)
             yzm = self.msgManager.getYZM()
             if yzm in [None,""]:
-                yzm = self.emailApi.recvEmail()
+                yzm = emailApi.recvEmail()
             if yzm:
                 print yzm
                 break
