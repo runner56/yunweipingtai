@@ -19,6 +19,7 @@ class PCeggs(object):
     def __init__(self, driver, msgManager):
         self.driver     = driver
         self.msgManager = msgManager
+        self.emailApi   = emailApi()
 
     def run(self):
         for account in PCEGGS_ACCOUNTS:
@@ -29,7 +30,7 @@ class PCeggs(object):
                 self.__sign()
             except:
                 import traceback
-                self.msgManger.sendMsg(traceback.format_exc().decode("utf8"), "text")
+                self.msgManager.sendMsg(traceback.format_exc().decode("utf8"), "text")
                 # 必须进行utf8解码，要不然注释的中文是utf8编码的。在后面用replace会出现编码错误。
             self.__flushcookie()
 
@@ -46,10 +47,15 @@ class PCeggs(object):
             self.__input_login_info(user, pwd)
 
     def __input_login_info(self, user, pwd): # 输错验证码后可以再次输入，不必刷新页面
-        loginMsgLocator = (By.ID, "div_msg")
+        loginMsgLocator = (By.ID, "div_msg") # 登录信息提示框，比如验证码错误
         yzmElement      = self.driver.find_element_by_id("valiCode")
         yzmElement.click()
-        self.__sendYZM(yzmElement)
+        try:
+            self.__sendYZM(yzmElement)  # 发送图片失败，再发送一次
+        except:
+            self.msgManager.sendMsg(u"PCeggs:发送验证码图片失败，尝试再次发送！", "text")
+            self.__input_login_info(user, pwd)
+            return
         yzm = self.__getYZM()
         self.driver.find_element_by_id("txt_UserName").send_keys(user)
         self.driver.find_element_by_id("txt_PWD").send_keys(pwd)
@@ -82,15 +88,16 @@ class PCeggs(object):
             self.__screenshot()
 
     def __sendYZM(self, yzmElement):
-        self.driver.save_screenshot("xx.png")
+        self.driver.save_screenshot("pceggsLogin.png")
+        time.sleep(1)
         left = int(yzmElement.location["x"])
         top = int(yzmElement.location["y"])
         right = int(yzmElement.location["x"]+yzmElement.size["width"])
         bottom = int(yzmElement.location["y"]+yzmElement.size["height"])
-        im = Image.open("xx.png")
+        im = Image.open("pceggsLogin.png")
         im = im.crop((left, top, right, bottom))
-        im.save("yzm.png")
-        self.msgManager.sendMsg(os.path.join(self.__path, "yzm.png"), "image")
+        im.save("pceggsYZM.png")
+        self.msgManager.sendMsg(os.path.join(self.__path, "pceggsYZM.png"), "image")
         self.msgManager.sendMsg(u"PCeggs:输入验证码,格式:@+验证码", "text")
 
     def __getYZM(self):
@@ -98,7 +105,7 @@ class PCeggs(object):
             time.sleep(8)
             yzm = self.msgManager.getYZM()
             if yzm in [None,""]:
-                yzm = emailApi.recvEmail()
+                yzm = self.emailApi.recvEmail()
             if yzm:
                 print yzm
                 break
@@ -107,8 +114,8 @@ class PCeggs(object):
 
     def __screenshot(self):
         self.driver.execute_script("window.scrollTo(1000,0)")
-        self.driver.save_screenshot("save_screenshot.png")
-        self.msgManager.sendMsg(os.path.join(PATH, "save_screenshot.png"), "image")
+        self.driver.save_screenshot("pceggs.png")
+        self.msgManager.sendMsg(os.path.join(self.__path, "pceggs.png"), "image")
 
     def __flushcookie(self):
         self.driver.delete_all_cookies()
