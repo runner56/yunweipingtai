@@ -32,15 +32,16 @@ def initialDriver(msgManger):
 
 class jxy:
     def __init__(self, driver, user, pwd, msgManger):
-        self.driver    = driver
-        self.user      = user
-        self.pwd       = pwd
-        self.msgManger = msgManger
-        self.uCoin     = ""
-        self.keys      = []
-        self.hoes      = []
-        self.msgList   = []
-        self.emailApi  = emailApi()
+        self.driver        = driver
+        self.user          = user
+        self.pwd           = pwd
+        self.msgManger     = msgManger
+        self.uCoin         = ""
+        self.keys          = []
+        self.hoes          = []
+        self.msgList       = []
+        self.emailApi      = emailApi()
+        self.redirectTimes = 5  # 加入重置次数限制，避免循环
 
 
     # 把msgManger都封装了一遍
@@ -86,9 +87,15 @@ class jxy:
     def requestUrl(self, url):
         self.driver.get(url)
         if self.driver.current_url != url:
-            self.sendMsg(u"ERROR：登录过期，需重新登录！")
-            self.login()
-            return True
+            self.sendMsg(u"ERROR：登录过期，需重新登录！\nurl:%s\ncurrrent_url:%s" % (url, current_url))
+            self.redirectTimes -= 1
+            if self.redirectTimes > 0:
+                self.login()
+                return True
+            else:
+                sys.exit()
+
+        self.redirectTimes = 5  # 重置次数
         return False
 
     # 定时器
