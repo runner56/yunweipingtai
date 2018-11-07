@@ -74,7 +74,7 @@ class naolidakaThread(MsgManager, redisComponent, Thread):
         
         except:
             import traceback
-            msg = traceback.format_exc()
+            msg = traceback.format_exc().decode("utf8")
             self.sendMsg(msg)
 
     def getUserInfo(self):
@@ -309,6 +309,6 @@ if __name__ == "__main__":
         main()
     except:
         import traceback
-        msg = traceback.format_exc()
+        msg = traceback.format_exc().decode("utf8")
         MsgManager.sendMsg(msg)
 

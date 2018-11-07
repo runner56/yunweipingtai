@@ -121,7 +121,7 @@ def start():
             ww91Instance.sendMsgList()
         except:
             import traceback
-            msgManger.sendMsg(traceback.format_exc(), "text")
+            msgManger.sendMsg(traceback.format_exc().decode("utf8"), "text")
 
 def quit():
     global driverList

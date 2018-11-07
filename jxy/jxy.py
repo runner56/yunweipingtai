@@ -86,8 +86,8 @@ class jxy:
 
     def requestUrl(self, url):
         self.driver.get(url)
-        if self.driver.current_url != url:
-            self.sendMsg(u"ERROR：登录过期，需重新登录！\nurl:%s\ncurrrent_url:%s" % (url, current_url))
+        if self.driver.current_url!=url and self.driver.current_url.find("login")!=-1:
+            self.sendMsg(u"ERROR：登录过期，需重新登录！\nurl:%s\ncurrent_url:%s" % (url, self.driver.current_url))
             self.redirectTimes -= 1
             if self.redirectTimes > 0:
                 self.login()
@@ -107,7 +107,7 @@ class jxy:
             self.processTreasure()
         except Exception,e:
             import traceback
-            msg = traceback.format_exc()
+            msg = traceback.format_exc().decode("utf8")
             self.sendMsg(u"账号%s出现异常%s" % (self.user,msg))
 
         try:

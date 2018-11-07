@@ -23,7 +23,7 @@ class emailApi(object):
         except Exception,e:
             import traceback
             print u"连接失败！"
-            print traceback.format_exc()
+            print traceback.format_exc().decode("utf8")
             return None
 
         print u"邮箱登录成功！"
