@@ -3,7 +3,7 @@
 import sys
 import xml.etree.cElementTree as ET
 from requests import Request, Session
-from flask import Flask, request
+from flask import Flask, request, redirect, url_for
 from flask_restful import Api, Resource
 from conf import Flask_Conf
 
@@ -22,6 +22,7 @@ sEncodingAESKey = Flask_Conf["sEncodingAESKey"]
 sCorpID = Flask_Conf["sCorpID"]
 ServerHost = Flask_Conf["ServerHost"]
 ServerPort = Flask_Conf["ServerPort"]
+FarmGameLog = Flask_Conf["FarmGameLog"]
 
 YZM = ""
 
@@ -52,14 +53,21 @@ class receiveMsg(Resource):
             print "ERR:DecryptMsg ret: " + str(ret)
             return "ERROR"
         xml_tree = ET.fromstring(sMsg)
-        content = xml_tree.find("Content").text # content是UNICODE的
-        print content
-        if content[0]=="@": #代表解析验证码
-            global YZM
-            YZM = content[1:]
+        msgType = xml_tree.find("MsgType").text
+        if msgType=="text":
+            content = xml_tree.find("Content").text # content是UNICODE的
+            print content
+            if content[0]=="@": #代表解析验证码
+                global YZM
+                YZM = content[1:]
+
+        elif msgType=="event":
+            event = xml_tree.find("Event").text
+            eventKey = xml_tree.find("EventKey").text
+            if eventKey=="farmgame":
+                farmgameMsg()
 
         return "" # 空包返回，告知已经收到消息
-
 
 class sendMsg(Resource):
     def get(self):
@@ -82,7 +90,6 @@ class sendMsg(Resource):
         msg = request.form.get("msg")
         weWorkApi.sendMessage(msg, msgType)
 
-
 class getYZM(Resource):
     def get(self):
         global YZM
@@ -97,6 +104,20 @@ class setYZM(Resource):
         yzm = request.args.get("yzm")
         YZM = yzm
         return "success"
+
+@app.route("/farmgameMsg")
+def farmgameMsg():
+    with open(FarmGameLog, "rb") as f:
+        t = f.readlines()[-6:]
+    msg = "".join(t)
+    weWorkApi.sendMessage(msg, "text")
+    return "success"
+
+@app.route("/farmgameMsg1")
+def farmgameMsg1():
+    farmgameMsg()
+    # return redirect(url_for("farmgameMsg"))
+    return "success1"
 
 # 验证地址类似http://api.3dept.com/?msg_signature=ASDFQWEXZCVAQFASDFASDFSS&timestamp=13500001234&nonce=123412323&echostr=ENCRYPT_STR
 api.add_resource(receiveMsg, "/")

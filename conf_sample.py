@@ -43,7 +43,8 @@ Flask_Conf = {
     "sEncodingAESKey":"",
     "sCorpID":"",
     "ServerHost":"127.0.0.1",
-    "ServerPort":7001
+    "ServerPort":7001,
+    "FarmGameLog":""
 }
 
 EMAIL_OPTIONS = {
