@@ -13,7 +13,7 @@ if len(sys.argv)>1 and sys.argv[1]=="test":
 else:
     from qywx import MsgManager
 
-import pceggs, p2peye
+import pceggs, p2peye, readArticle
 
 driver = None
 
@@ -36,6 +36,9 @@ def start():
 
     pceggsInstance = pceggs.PCeggs(driver, msgManger)
     pceggsInstance.run()
+
+    readArticleInstance = readArticle.readArticle(msgManger)
+    readArticleInstance.run()
 
 def quit():
     global driver
