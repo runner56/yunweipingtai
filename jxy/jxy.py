@@ -162,7 +162,7 @@ class jxy:
                 WebDriverWait(self.driver, 8, 0.5).until(EC.visibility_of_element_located(userLinkLocator))
                 self.sendMsg(u"%s登录成功！" % self.user)
                 self.sign()
-                # self.buyMineral() # 18.5.23不需要购买矿石了，亏本
+                self.buyMineral() # 18.5.23不需要购买矿石了，亏本；18.12.26加入矿石购买
                 return "LoginSuccess"
             except TimeoutException:
                 self.sendMsg(u"%s登录失败！" % self.user)
