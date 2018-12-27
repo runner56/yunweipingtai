@@ -320,19 +320,20 @@ class jxy:
         url = "http://www.juxiangyou.com/forge/shop?type=ore"
         isRedirect = self.requestUrl(url)
         if isRedirect:
-            return
+            return False
         locator = (By.XPATH, "/html/body/div[3]/div[5]/div[2]/div[6]/span") # 通过出现"锻造商城"来判断页面加载完成
         try:
             WebDriverWait(self.driver, 10, 0.5).until(EC.visibility_of_element_located(locator))
         except:
             self.appendMsgList(u"ERROR:加载商店页面失败！")
-            return
+            return False
 
         # self.appendMsgList(u"完成商店页面加载")
 
         mineralLocator = (By.CSS_SELECTOR, "i.icon.btn-sprite.buy")
         confirmBtnLocator = (By.CSS_SELECTOR, "i.little-btns.confirm.J_buyStoneConfirm")
         closeBtnLocator = (By.CSS_SELECTOR, "i.little-btns.confirm.J_closeCommonFc")
+        closeMsgLocator = (By.XPATH, "//div[@class='fc-body']/div[@class='text']")
 
         while True:
             try:
@@ -354,13 +355,15 @@ class jxy:
             try:
                 WebDriverWait(self.driver, 10, 0.5).until(EC.visibility_of_element_located(closeBtnLocator))
             except TimeoutException:
-                self.appendMsgList(u"未弹出成功购买矿石的提示框！")
+                self.appendMsgList(u"未弹出购买矿石的结果提示框！")
                 break
-            closeBtn = self.driver.find_element(*closeBtnLocator) # 购买成功
+            closeBtn = self.driver.find_element(*closeBtnLocator) # 购买结果提示框
+            closeMsg = self.driver.find_element(*closeMsgLocator).text.strip()
             closeBtn.click()
+            self.appendMsgList(closeMsg)
+            if closeMsg == u"U币不足，购买失败！":
+                break
             
-            self.appendMsgList(u"成功购买矿石")
-
     # 锻造钥匙
     def forgeMineral(self):
         url = "http://www.juxiangyou.com/forge/hall"
