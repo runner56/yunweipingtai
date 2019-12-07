@@ -55,17 +55,17 @@ class P2Peye(object):
         except TimeoutException:
             raise Exception, u"P2Peye Error:登录无响应！"
 
+
     def __sign(self):
-        url = "https://licai.p2peye.com/club"
-        signBtnLocator = (By.ID, "signBtn")
+        url = "https://licai.p2peye.com/task/"
+        signBtnLocator = (By.CSS_SELECTOR, "[class='qt-gr sign-btn']") # By.CLASS_NAME，不能使用复合类名，如：(By.CLASS_NAME, "qt-gr sign-btn")
         self.driver.get(url)
         try:
             WebDriverWait(self.driver, 8, 0.5).until(EC.visibility_of_element_located(signBtnLocator))
         except TimeoutException:
             self.msgManger.sendMsg(u"P2Peye Error:签到按钮定位失败！", "text")
         else:
-            # self.driver.find_element(*signBtnLocator).click() # 无法点击，被图片挡住了
-            self.driver.execute_script("document.getElementById('signBtn').click()") # 使用js来模拟点击
+            self.driver.execute_script("document.getElementsByClassName('qt-gr sign-btn')[0].click()") # 使用js来模拟点击
             self.msgManger.sendMsg(u"P2P天眼签到成功！", "text")
         time.sleep(2)
         self.driver.execute_script("window.scrollTo(1000,0)") # 滚动到最右端，方便截图

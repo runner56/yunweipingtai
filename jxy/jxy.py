@@ -157,7 +157,7 @@ class jxy:
             self.driver.find_element_by_id("code").send_keys(yzm)
 
             # self.driver.find_element_by_class_name("J_userlogin").click() # 点击登录
-            self.driver.execute_script("document.getElementByClassName('J_userlogin').click()") # 通过js点击登录
+            self.driver.execute_script("document.getElementsByClassName('J_userlogin')[0].click()") # 通过js点击登录
             userLinkLocator = (By.CSS_SELECTOR, "a.user-link")
             try:
                 WebDriverWait(self.driver, 8, 0.5).until(EC.visibility_of_element_located(userLinkLocator))

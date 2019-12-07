@@ -1,4 +1,7 @@
 # -*- coding:utf8 -*-
+
+# 测试用法：python sign.py test
+
 import sys, time, datetime, threading
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options

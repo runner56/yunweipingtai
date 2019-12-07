@@ -80,9 +80,11 @@ class PCeggs(object):
             signDivLocator = (By.XPATH, "//div[contains(text(),'立即签到')]")
             try:
                 WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located(signDivLocator))
-                self.driver.find_element(*signDivLocator).click()
             except TimeoutException:
                 raise Exception, u"PCeggs:签到失败，未定位到签到按钮!"
+            else:
+                self.driver.execute_script("document.getElementsByClassName('anniu')[0].click()") # 通过js来调用点击，防止被遮挡
+                # self.driver.find_element(*signDivLocator).click()
         finally:
             time.sleep(2)
             self.__screenshot()
