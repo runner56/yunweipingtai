@@ -5,7 +5,7 @@ import xml.etree.cElementTree as ET
 from requests import Request, Session
 from flask import Flask, request, redirect, url_for
 from flask_restful import Api, Resource
-from conf import Flask_Conf
+from config import Flask_Conf
 
 sys.path.append("./weworkapi/")
 sys.path.append("./weworkapi/api/src/")

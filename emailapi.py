@@ -20,13 +20,13 @@ class emailApi(object):
             connection.user(self.user)
             connection.pass_(self.pass_)
 
-        except Exception,e:
+        except Exception as e:
             import traceback
-            print u"连接失败！"
-            print traceback.format_exc().decode("utf8")
+            print("连接失败！")
+            print(traceback.format_exc().decode("utf8"))
             return None
 
-        print u"邮箱登录成功！"
+        print("邮箱登录成功！")
         return connection
 
     def parseMailSubject(self, msg):
@@ -50,13 +50,12 @@ class emailApi(object):
             ts = int(time.mktime(t))
             ts = float(str(ts)+str("%06d" % d.microsecond))/1000000
             if ts==self.lastTimeStamp:
-                print self.lastTimeStamp
+                print(self.lastTimeStamp)
                 return None
             self.lastTimeStamp = ts
             return self.parseMailSubject(mail)
         except: # 重新登录
             self.connection = self.openPopConnection()
-
 
 if __name__ == '__main__':
     x = emailApi()

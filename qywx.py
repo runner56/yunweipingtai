@@ -38,7 +38,7 @@ class TestMsgManager(WxMsgSender):
         super(TestMsgManager, self).__init__()
 
     def sendMsg(self, msg, msgType):
-        print msg
+        print(msg)
 
     def getYZM(self):
         yzmCode = raw_input(u"请输入验证码：".encode("gbk"))

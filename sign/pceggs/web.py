@@ -1,6 +1,4 @@
-# -*- coding:utf8 -*-
-
-import os, sys, time, threading, random, datetime
+import os, time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
@@ -9,19 +7,17 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from PIL import Image
 
-sys.path.append("..")
-from conf import PCEGGS_ACCOUNTS
-from emailapi import emailApi
-
-class PCeggs(object):
+import logging
+logger = logging.getLogger(__name__)
+class web(object):
     __path = os.getcwd()
 
     def __init__(self, driver, msgManager):
         self.driver     = driver
         self.msgManager = msgManager
-        self.emailApi   = emailApi()
+        # self.emailApi   = emailApi()
 
-    def run(self):
+    def __call__(self):
         for account in PCEGGS_ACCOUNTS:
             user = account["user"]
             pwd = account["pwd"]
@@ -30,10 +26,10 @@ class PCeggs(object):
                 self.__sign()
             except:
                 import traceback
-                self.msgManager.sendMsg(traceback.format_exc().decode("utf8"), "text")
+                logger.critical(traceback.format_exc())
+                # self.msgManager.sendMsg(traceback.format_exc().decode("utf8"), "text")
                 # 必须进行utf8解码，要不然注释的中文是utf8编码的。在后面用replace会出现编码错误。
             self.__flushcookie()
-
 
     def __login(self, user, pwd):
         url = "http://www.pceggs.com/nologin.aspx"
@@ -42,7 +38,7 @@ class PCeggs(object):
         try:
             WebDriverWait(self.driver, 10, 0.5).until(EC.element_to_be_clickable(loginBtnLocator))
         except TimeoutException:
-            raise Exception, u"PCeggs:无法定位到登录按钮！"
+            raise Exception("PCeggs:无法定位到登录按钮！")
         else:
             self.__input_login_info(user, pwd)
 
@@ -53,7 +49,7 @@ class PCeggs(object):
         try:
             self.__sendYZM(yzmElement)  # 发送图片失败，再发送一次
         except:
-            self.msgManager.sendMsg(u"PCeggs:发送验证码图片失败，尝试再次发送！", "text")
+            logger.error("发送验证码图片失败，尝试再次发送！")
             self.__input_login_info(user, pwd)
             return
         yzm = self.__getYZM()
@@ -75,13 +71,13 @@ class PCeggs(object):
             WebDriverWait(self.driver, 10, 0.5).until(EC.visibility_of_element_located(signBtnLocator))
             self.driver.get(url)
         except TimeoutException:
-            raise Exception, u"PCeggs:未定位到主页标识，可能已完成签到!"
+            raise Exception("PCeggs:未定位到主页标识，可能已完成签到!")
         else:
             signDivLocator = (By.XPATH, "//div[contains(text(),'立即签到')]")
             try:
                 WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located(signDivLocator))
             except TimeoutException:
-                raise Exception, u"PCeggs:签到失败，未定位到签到按钮!"
+                raise Exception("PCeggs:签到失败，未定位到签到按钮!")
             else:
                 self.driver.execute_script("document.getElementsByClassName('anniu')[0].click()") # 通过js来调用点击，防止被遮挡
                 # self.driver.find_element(*signDivLocator).click()
@@ -99,19 +95,21 @@ class PCeggs(object):
         im = Image.open("pceggsLogin.png")
         im = im.crop((left, top, right, bottom))
         im.save("pceggsYZM.png")
-        self.msgManager.sendMsg(os.path.join(self.__path, "pceggsYZM.png"), "image")
-        self.msgManager.sendMsg(u"PCeggs:输入验证码,格式:@+验证码", "text")
+        logger.info("sendImage:" + os.path.join(self.__path, "pceggsYZM.png"))
+        logger.info("PCeggs:输入验证码,格式:@+验证码")
+        # self.msgManager.sendMsg(os.path.join(self.__path, "pceggsYZM.png"), "image")
+        # self.msgManager.sendMsg(u"PCeggs:输入验证码,格式:@+验证码", "text")
 
     def __getYZM(self):
         while True:
             time.sleep(8)
             yzm = self.msgManager.getYZM()
-            if yzm in [None,""]:
-                yzm = self.emailApi.recvEmail()
+            # if yzm in [None,""]:
+                # yzm = self.emailApi.recvEmail()
             if yzm:
-                print yzm
+                print(yzm)
                 break
-        self.msgManager.sendMsg(u"PCeggs:输入的验证码: %s" % yzm, "text")
+        logger.info(u"PCeggs:输入的验证码: %s", yzm)
         return yzm
 
     def __screenshot(self):
@@ -121,4 +119,3 @@ class PCeggs(object):
 
     def __flushcookie(self):
         self.driver.delete_all_cookies()
-

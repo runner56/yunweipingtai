@@ -10,7 +10,7 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from PIL import Image
 
 sys.path.append("..")
-from conf import P2PEYE_Conf 
+from config import P2PEYE_Conf 
 
 
 class P2Peye(object):
@@ -42,7 +42,7 @@ class P2Peye(object):
         try:
             WebDriverWait(self.driver, 8, 0.5).until(EC.visibility_of_element_located(userNameLocator))
         except TimeoutException:
-            raise Exception, u"P2Peye Error:登录界面定位失败！"
+            raise Exception(u"P2Peye Error:登录界面定位失败！")
         else:
             self.driver.find_element(*userNameLocator).send_keys(user)
             self.driver.find_element(*pwdLocator).send_keys(pwd)
@@ -53,7 +53,7 @@ class P2Peye(object):
         try:
             WebDriverWait(self.driver, 8, 0.5).until(EC.visibility_of_element_located(promptLocator))
         except TimeoutException:
-            raise Exception, u"P2Peye Error:登录无响应！"
+            raise Exception("P2Peye Error:登录无响应！")
 
 
     def __sign(self):
