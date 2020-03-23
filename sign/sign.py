@@ -38,12 +38,10 @@ class LoopTimer(threading.Thread):
             self.function(*self.args, **self.kwargs)
 
 def main():
-    # LoopTimer(pceggs.clockIn, nt=(7,5)).start()
+    LoopTimer(pceggs.clockIn, nt=(7,5)).start()
     LoopTimer(pceggs.readNovel, nt=(7,30)).start()
-    # LoopTimer((8,0), sign).start()
     LoopTimer(pceggs.readArticle, nt=(8,30)).start()
-    # LoopTimer(pceggs.clockEnroll, args=[20], nt=(23,55)).start()
-
+    LoopTimer(pceggs.clockEnroll, args=[20], nt=(23,55)).start()
     LoopTimer(quzhongcai.qzc, td=30*60).start()
 
 if __name__ == '__main__':

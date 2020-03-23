@@ -1,4 +1,4 @@
-import requests, urllib, json, logging
+import requests, urllib, json, logging, threading
 import time
 
 logger = logging.getLogger(__name__)
@@ -159,7 +159,7 @@ class qzc(object):
         if res.get("code")!=0:
             logger.critical("种植物出错！")
             return False
-        logger.info("种植物成功")
+        logger.debug("种植物成功")
         return True
 
     def plant_ok(self):
@@ -218,7 +218,7 @@ class qzc(object):
             logger.critical("浇水出错！")
             return False
         self.drips = res["data"]["drips"]
-        logger.info("浇水一次")
+        logger.debug("浇水一次")
         return True
 
     def get_pool_info(self):
@@ -245,7 +245,7 @@ class qzc(object):
         if res["code"]:
             logger.warning(res["message"])
             return False
-        logger.info("水池加速产水，输出信息：%s" % res["data"])
+        logger.debug("水池加速产水，输出信息：%s" % res["data"])
         return True
 
 
@@ -260,7 +260,7 @@ class qzc(object):
             logger.warning("收水滴失败！")
             return False
         self.drips += res["data"]["drips_num"]
-        logger.info("收到%d水滴，目前总共有%d水滴", res["data"]["drips_num"], self.drips)
+        logger.debug("收到%d水滴，目前总共有%d水滴", res["data"]["drips_num"], self.drips)
         return True
 
     def get_plant_info(self):
@@ -336,7 +336,7 @@ class qzc(object):
 
         if len(data["plants_info"]) == 0:
             msg += "，土地为空，可以种植物！"
-            logger.info(msg)
+            logger.debug(msg)
             return True
 
         self.plants_info = data["plants_info"][0]
@@ -451,7 +451,7 @@ class qzc(object):
             "s_token": self.s_token,
         })
         res = requests.get(url, params=params).json()
-        logger.info(res)
+        logger.debug(res)
         if res["code"]:
             logger.warning(res["message"])
         return res["data"]["sign_record"]
@@ -487,7 +487,7 @@ class qzc(object):
         if res["code"]:
             logger.warning(res["message"])
             return False
-        logger.info("抽盒子，还剩%d爱心", res["data"]["my_gift_box_info"]["red_heart"])
+        logger.debug("抽盒子，还剩%d爱心", res["data"]["my_gift_box_info"]["red_heart"])
         self.box_take_reward()
         return True
 
@@ -556,7 +556,7 @@ class qzc(object):
         if res["code"]:
             logger.warning("进入翻牌界面："+res["message"])
             return False
-        logger.info("进入翻牌界面")
+        logger.debug("进入翻牌界面")
         return True
 
     def start_flop(self):
@@ -573,7 +573,7 @@ class qzc(object):
         if res["code"]:
             logger.warning("开始翻牌："+res["message"])
             return False
-        logger.info("开始翻牌")
+        logger.debug("开始翻牌")
         self.flop_video()
         self.flop_take_reward()
         return True
@@ -592,7 +592,7 @@ class qzc(object):
         if res["code"]:
             logger.warning("翻牌：看视频"+res["message"])
             return
-        logger.info("翻牌：看视频获得两次翻牌机会")
+        logger.debug("翻牌：看视频获得两次翻牌机会")
 
     def flop_take_reward(self):
         """
@@ -609,7 +609,7 @@ class qzc(object):
         if res["code"]:
             logger.warning("翻牌：获取奖励"+res["message"])
             return
-        logger.info("翻牌：获取奖励%s", res["data"])
+        logger.debug("翻牌：获取奖励%s", res["data"])
 
     def flop_video_2(self):
         """
@@ -630,7 +630,7 @@ class qzc(object):
         if res["data"]["type"] == 0:
             logger.warning("翻牌，看视频未获得体力")
             return False
-        logger.info("翻牌，看视频获得体力%s", res["data"]["physical"])
+        logger.debug("翻牌，看视频获得体力%s", res["data"]["physical"])
         return True
 
     # 偷菜
@@ -649,7 +649,7 @@ class qzc(object):
         if res["code"]:
             logger.warning(res["message"])
             return False
-        logger.info("偷菜，得金币%s", res["data"]["coin_num"])
+        logger.debug("偷菜，得金币%s", res["data"]["coin_num"])
         return True
 
     def get_clock_12_activity_info(self):
@@ -662,11 +662,11 @@ class qzc(object):
             "config_type": (None, 3)
         }
         res = requests.post(url, files=files).json()
-        logger.info(res)
+        logger.debug(res)
         if res["code"]:
             logger.warning(res["message"])
             return False
-        logger.info("12点活动，返回信息%s", res["data"])
+        logger.debug("12点活动，返回信息%s", res["data"])
         return True
 
     def get_clock_12_activity_take_reward(self):
@@ -678,7 +678,7 @@ class qzc(object):
             "extra": (None, 1) # 待核实
         }
         res = requests.post(url, files=files).json()
-        logger.info(res)
+        logger.debug(res)
         if res["code"]:
             logger.warning(res["message"])
             return
@@ -695,11 +695,11 @@ class qzc(object):
             "config_type": (None, 1)
         }
         res = requests.post(url, files=files).json()
-        logger.info(res)
+        logger.debug(res)
         if res["code"]:
             logger.warning(res["message"])
             return False
-        logger.info("19点活动，返回信息%s", res["data"])
+        logger.debug("19点活动，返回信息%s", res["data"])
         return True
 
     def get_clock_19_activity_take_reward(self):
@@ -716,7 +716,7 @@ class qzc(object):
             "pool_id": (None, 1)
         }
         res = requests.post(url, files=files).json()
-        logger.info(res)
+        logger.debug(res)
         if res["code"]:
             logger.warning(res["message"])
 
@@ -726,13 +726,12 @@ class qzc(object):
             "pool_id": (None, 2)
         }
         res = requests.post(url, files=files).json()
-        logger.info(res)
+        logger.debug(res)
         if res["code"]:
             logger.warning(res["message"])
             return
 
         logger.info("19点活动，获奖信息%s", res["data"])
-
 
 class qzc_strategy(qzc):
 
@@ -756,11 +755,9 @@ class qzc_strategy(qzc):
 
         self.steal_plant_strategy()
 
-        self.get_clock_12_activity_take_reward()
+        # self.get_clock_12_activity_take_reward() # 3.23移除
 
-        self.get_clock_19_activity_take_reward()
-
-        
+        # self.get_clock_19_activity_take_reward() # 3.23移除
 
         if self.get_plant_info() is False:
             return False
@@ -840,6 +837,15 @@ class qzc_strategy(qzc):
         while flag:
             flag = self.pool_speed_up()
             time.sleep(1)
+
+class qzcThread(threading.Thread):
+    def __init__(self, app):
+        super(qzcThread, self).__init__()
+        self.app = app
+
+    def run(self):
+        logger.info("启动趣种菜线程")
+        self.app.run()
 
 if __name__ == "__main__":
     logging.basicConfig(level = logging.INFO, format = "%(levelname)-8s %(asctime)s %(name)s %(message)s")
